@@ -138,7 +138,7 @@ function AppContent() {
       
       {showHeader && <Header />}
 
-      <main className="flex flex-col w-full">
+      <main className={`flex flex-col w-full ${showHeader ? 'pt-16' : ''}`} style={showHeader ? { paddingTop: 'calc(4rem + env(safe-area-inset-top))' } : {}}>
         <Router isAuthenticated={!!isAuthenticated} user={user} />
       </main>
 
