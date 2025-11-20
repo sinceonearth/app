@@ -459,23 +459,23 @@ const RadrMessages = () => {
   }, [location, radrGroups, token, checkArrival]);
 
   return (
-    <>
+    <div className="min-h-screen w-full bg-black text-white flex flex-col relative pb-16 overflow-x-hidden" style={!selectedGroup ? { paddingTop: 'calc(3.5rem + env(safe-area-inset-top))' } : { paddingTop: '1rem' }}>
       {!selectedGroup && <Header />}
-      <div className={`relative min-h-screen w-full bg-black text-white ${!selectedGroup ? 'pt-24' : 'pt-4'} pb-24 flex flex-col items-center px-4`}>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] bg-[#22c55e]/10 blur-[120px] rounded-full pointer-events-none" />
+      
+      {!selectedGroup && (
+        <motion.h1
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-[#22c55e] drop-shadow-[0_0_15px_rgba(34,197,94,0.4)] text-center mb-10 mt-16 w-full"
+        >
+          Groups
+        </motion.h1>
+      )}
 
-        {!selectedGroup && (
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-[#22c55e] drop-shadow-[0_0_15px_rgba(34,197,94,0.4)] text-center mb-10"
-          >
-            Groups
-          </motion.h1>
-        )}
+      <div className="w-full flex flex-col items-center px-4">
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-4xl space-y-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-4xl space-y-6 mx-auto">
           {!selectedGroup ? (
             <>
               <div className="flex justify-between items-center mb-4">
@@ -1115,7 +1115,7 @@ const RadrMessages = () => {
           )}
         </AnimatePresence>
       </div>
-    </>
+    </div>
   );
 };
 

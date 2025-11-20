@@ -313,7 +313,7 @@ export default function Account() {
     <div className="min-h-screen w-full bg-black text-white flex flex-col relative px-4 md:px-14 pb-16 pt-1 overflow-x-hidden">
       <Header />
 
-      <div className="w-full flex flex-col pt-24 pb-12">
+      <div className="w-full flex flex-col pb-12" style={{ paddingTop: 'calc(3.5rem + env(safe-area-inset-top))' }}>
         {/* Title */}
         <motion.h1
           initial={{ opacity: 0, y: -20 }}

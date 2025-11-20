@@ -14,7 +14,7 @@ export default function TravelOverview() {
     <>
       <Header />
 
-      <div className="relative min-h-screen w-full bg-black text-white pt-20 pb-24 flex flex-col px-6 md:px-8">
+      <div className="relative min-h-screen w-full bg-black text-white pb-24 flex flex-col px-6 md:px-8" style={{ paddingTop: 'calc(3.5rem + env(safe-area-inset-top))' }}>
         {/* Toggle Tab Bar */}
         <div className="flex justify-center mb-3 rounded-full p-3 gap-8 w-full max-w-md mx-auto shadow-inner">
           {tabs.map((tab) => {

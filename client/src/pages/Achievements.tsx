@@ -106,16 +106,15 @@ export default function Achievements() {
   const getYOffset = () => Math.random() * 4 - 2;
 
   return (
-    <div className="min-h-screen w-full bg-black text-white flex flex-col relative pb-16 pt-1 overflow-x-hidden">
+    <div className="min-h-screen w-full bg-black text-white flex flex-col relative pb-16 overflow-x-hidden" style={{ paddingTop: 'calc(3.5rem + env(safe-area-inset-top))' }}>
       <Header />
-<div className="w-full flex flex-col pt-12 pb-12"></div>
 
       {/* Title */}
       <motion.h1
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-[#22c55e] drop-shadow-[0_0_15px_rgba(34,197,94,0.4)] text-center mb-10 w-full"
+        className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-[#22c55e] drop-shadow-[0_0_15px_rgba(34,197,94,0.4)] text-center mb-10 w-full mt-1"
       >
         Achievements
       </motion.h1>

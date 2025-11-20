@@ -13,7 +13,7 @@ export default function Privacy() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-white pt-20 pb-24">
+    <div className="min-h-screen bg-black text-white pb-24" style={{ paddingTop: 'calc(3.5rem + env(safe-area-inset-top))' }}>
       <div className="max-w-4xl mx-auto px-6">
         {/* Back Button */}
         <button

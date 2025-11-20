@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import Globe from "react-globe.gl";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { Header } from "@/components/Header";
 import { StatsDashboard } from "@/components/StatsDashboard";
 import { apiRequest } from "@/lib/queryClient";
 import type { Flight } from "@shared/schema";
@@ -120,11 +119,8 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen w-screen bg-black text-white flex flex-col">
-      {/* Header with Menu */}
-      <Header />
-      
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col pt-12 overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Globe */}
         <div ref={containerRef} className="w-full h-[50vh] relative z-10">
           <Globe

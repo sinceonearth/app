@@ -134,7 +134,7 @@ const Radar = () => {
   return (
     <>
       <Header />
-      <div className="relative min-h-screen w-full bg-black text-white pt-24 pb-24 flex flex-col items-center px-4">
+      <div className="relative min-h-screen w-full bg-black text-white pb-24 flex flex-col items-center px-4" style={{ paddingTop: 'calc(3.5rem + env(safe-area-inset-top))' }}>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] bg-[#22c55e]/10 blur-[120px] rounded-full pointer-events-none" />
 
         <motion.h1

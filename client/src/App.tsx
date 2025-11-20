@@ -129,7 +129,7 @@ function AppContent() {
   const showHeader =
     mounted &&
     isAuthenticated &&
-    !["/", "/get-started", "/login", "/register", "/profile-setup", "/radr_messages"].includes(location);
+    !["/get-started", "/login", "/register", "/profile-setup", "/radr_messages"].includes(location);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -138,7 +138,7 @@ function AppContent() {
       
       {showHeader && <Header />}
 
-      <main className={`flex flex-col w-full ${showHeader ? 'pt-16' : ''}`} style={showHeader ? { paddingTop: 'calc(4rem + env(safe-area-inset-top))' } : {}}>
+      <main className="flex flex-col w-full" style={showHeader ? { paddingTop: 'calc(3.5rem + env(safe-area-inset-top))' } : {}}>
         <Router isAuthenticated={!!isAuthenticated} user={user} />
       </main>
 
