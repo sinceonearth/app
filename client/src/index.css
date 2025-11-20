@@ -1,0 +1,47 @@
+/* ============================
+   🧱 Tailwind Base Layers
+   ============================ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================
+   🎨 Base Font & Background Styling
+   ============================ */
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Green text selection color */
+  ::selection {
+    background-color: #22c55e;
+    color: #000000;
+  }
+
+  ::-moz-selection {
+    background-color: #22c55e;
+    color: #000000;
+  }
+
+  html, body {
+    @apply font-sans antialiased bg-black text-white h-full;
+  }
+
+  #root {
+    @apply min-h-screen bg-black text-white;
+  }
+
+  input, textarea, button {
+    @apply bg-black text-white;
+  }
+
+  button:focus,
+  button:active,
+  button:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+}
+

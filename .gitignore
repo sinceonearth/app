@@ -1,0 +1,11 @@
+# Mobile platforms
+android/
+ios/
+
+# Node modules
+node_modules/
+
+# Build artifacts
+dist/
+*.env
+

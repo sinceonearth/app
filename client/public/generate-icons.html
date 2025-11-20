@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Icons</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 10px;
+        }
+        .icon-group {
+            margin: 20px 0;
+        }
+        button {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #16a34a;
+        }
+    </style>
+</head>
+<body>
+    <h1>Icon Generator</h1>
+    <p>Click the buttons below to download PNG icons for your PWA</p>
+    
+    <div class="icon-group">
+        <h3>Favicon (32x32)</h3>
+        <canvas id="favicon" width="32" height="32"></canvas>
+        <button onclick="downloadIcon('favicon', 'favicon.png')">Download favicon.png</button>
+    </div>
+    
+    <div class="icon-group">
+        <h3>App Icon 192x192</h3>
+        <canvas id="icon192" width="192" height="192"></canvas>
+        <button onclick="downloadIcon('icon192', 'icon-192.png')">Download icon-192.png</button>
+    </div>
+    
+    <div class="icon-group">
+        <h3>App Icon 512x512</h3>
+        <canvas id="icon512" width="512" height="512"></canvas>
+        <button onclick="downloadIcon('icon512', 'icon-512.png')">Download icon-512.png</button>
+    </div>
+    
+    <div class="icon-group">
+        <h3>Apple Touch Icon (180x180)</h3>
+        <canvas id="apple" width="180" height="180"></canvas>
+        <button onclick="downloadIcon('apple', 'apple-touch-icon.png')">Download apple-touch-icon.png</button>
+    </div>
+
+    <script>
+        function drawGlobeIcon(canvas) {
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+            const center = size / 2;
+            const radius = size * 0.35;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Set green color
+            ctx.strokeStyle = '#22c55e';
+            ctx.fillStyle = '#22c55e';
+            ctx.lineWidth = size * 0.05;
+            
+            // Draw circle
+            ctx.beginPath();
+            ctx.arc(center, center, radius, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Draw vertical line (meridian)
+            ctx.beginPath();
+            ctx.ellipse(center, center, radius * 0.3, radius, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Draw horizontal line (equator)
+            ctx.beginPath();
+            ctx.moveTo(center - radius, center);
+            ctx.lineTo(center + radius, center);
+            ctx.stroke();
+        }
+        
+        function downloadIcon(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // Draw all icons on page load
+        window.onload = function() {
+            drawGlobeIcon(document.getElementById('favicon'));
+            drawGlobeIcon(document.getElementById('icon192'));
+            drawGlobeIcon(document.getElementById('icon512'));
+            drawGlobeIcon(document.getElementById('apple'));
+        };
+    </script>
+</body>
+</html>
