@@ -10,7 +10,18 @@ export function isMobileDevice(): boolean {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
+export function isCapacitor(): boolean {
+  // Check if running in Capacitor native app (has file:// protocol or capacitor global)
+  return !!(window as any).Capacitor || window.location.protocol === 'capacitor:';
+}
+
 export function registerServiceWorker(): void {
+  // Skip service worker in Capacitor (file:// protocol doesn't support it)
+  if (isCapacitor()) {
+    console.log('[PWA] Running in Capacitor - service worker not needed (all assets bundled)');
+    return;
+  }
+  
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker

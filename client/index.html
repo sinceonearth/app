@@ -2,12 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>Since On Earth</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
+    <title>SinceOnEarth</title>
     <meta name="description" content="Track your flight history, view travel statistics, and visualize your journey across the globe with interactive maps." />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/icons/face-alien-192x192.png" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
@@ -15,9 +16,10 @@
 
     <!-- iOS PWA support -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="SinceOnEarth" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/icons/face-alien-180x180.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -26,9 +28,33 @@
 
     <!-- Styles -->
     <style>
+      /* Fix iOS overscroll/rubber band white bar - Works with StatusBar API */
+      html {
+        background-color: #000000;
+      }
+      
       body {
         margin: 0;
         background-color: #000000;
+        position: relative;
+      }
+      
+      /* Black background that extends into iOS overscroll area */
+      body::before {
+        content: '';
+        position: fixed;
+        top: -100vh;
+        bottom: -100vh;
+        left: 0;
+        right: 0;
+        background-color: #000000;
+        z-index: -1;
+      }
+      
+      #root {
+        position: relative;
+        background-color: #000000;
+        min-height: 100vh;
       }
       
       /* Instant splash screen while JS loads */
@@ -41,11 +67,6 @@
         align-items: center;
         justify-content: center;
         z-index: 9999;
-      }
-      
-      /* Prevent white flash on load */
-      html {
-        background-color: #000000;
       }
     </style>
   </head>

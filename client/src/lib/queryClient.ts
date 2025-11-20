@@ -149,12 +149,20 @@ export const getQueryFn =
       await throwIfResNotOk(res);
       const data = await res.json();
       
-      // Cache user data for offline use
-      if (endpoint === "/api/auth/user" && data) {
+      // Cache data for offline use
+      if (data) {
         try {
-          localStorage.setItem("cached_user", JSON.stringify(data));
+          if (endpoint === "/api/auth/user") {
+            localStorage.setItem("cached_user", JSON.stringify(data));
+          } else if (endpoint === "/api/flights") {
+            localStorage.setItem("cached_flights", JSON.stringify(data));
+          } else if (endpoint === "/api/stayins") {
+            localStorage.setItem("cached_stayins", JSON.stringify(data));
+          } else if (endpoint === "/api/radr/groups") {
+            localStorage.setItem("cached_radr_groups", JSON.stringify(data));
+          }
         } catch (err) {
-          console.warn("Failed to cache user data:", err);
+          console.warn("Failed to cache data:", err);
         }
       }
       
