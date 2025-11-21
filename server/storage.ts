@@ -191,9 +191,13 @@ export const storage = {
 
   async getAllInviteCodes() {
     const result = await pool.query(
-      `SELECT ic.*, u.username as created_by_username 
+      `SELECT ic.*, 
+              u.username as created_by_username,
+              COALESCE(COUNT(users_with_code.id), 0)::INTEGER as current_uses
        FROM invite_codes ic
        LEFT JOIN users u ON ic.created_by = u.id
+       LEFT JOIN users users_with_code ON users_with_code.invite_code_used = ic.code
+       GROUP BY ic.id, u.username
        ORDER BY ic.created_at DESC`,
     );
     return result.rows;

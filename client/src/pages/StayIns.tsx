@@ -2,11 +2,12 @@
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import type { Stayin } from "@shared/schema";
-import { MapPin, Calendar, ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { MapPin, Calendar, ArrowLeft, Plus, Trash2, Edit2, Save, X } from "lucide-react";
 import AddStayInForm from "@/components/AddStayInForm";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
+import { Input } from "@/components/ui/input";
 
 const PAGE_SIZE = 12;
 
@@ -115,7 +116,43 @@ export default function StayIns() {
   // --- Expandable Blue Theme StayIn Card
 const StayCard = ({ s }: { s: Stayin }) => {
   const [open, setOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    name: s.name,
+    city: s.city,
+    country: s.country,
+    check_in: s.check_in,
+    check_out: s.check_out,
+    maps_pin: s.maps_pin || '',
+    type: s.type,
+  });
   const nights = calcNights(s.check_in, s.check_out);
+
+  const handleSaveEdit = async () => {
+    if (!s.id || !token) return;
+    const res = await apiRequest("PUT", `/api/stayins/${s.id}`, editData, token);
+    if (!res.ok) return alert("Failed to update stay-in");
+    setIsEditing(false);
+    const refreshRes = await apiRequest("GET", "/api/stayins", null, token);
+    if (refreshRes.ok) {
+      const data = await refreshRes.json();
+      setStayins(data);
+      localStorage.setItem("stayins", JSON.stringify(data));
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditData({
+      name: s.name,
+      city: s.city,
+      country: s.country,
+      check_in: s.check_in,
+      check_out: s.check_out,
+      maps_pin: s.maps_pin || '',
+      type: s.type,
+    });
+    setIsEditing(false);
+  };
 
   const typeColor: Record<string, string> = {
     HOTEL: "text-blue-400",
@@ -125,34 +162,32 @@ const StayCard = ({ s }: { s: Stayin }) => {
   };
 
   return (
-    <motion.div
-      layout
+    <div
       onClick={() => setOpen((p) => !p)}
-      initial={false}
-      animate={{ scale: open ? 1.015 : 1 }}
-      transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
       className={`relative cursor-pointer rounded-[25px] overflow-hidden
         shadow-[0_8px_32px_rgba(0,0,0,0.25)] border border-white/10 backdrop-blur-xl
         bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900
-        ${open ? "z-20" : "z-10 -mt-6 hover:-translate-y-1"}
-        transition-all duration-300`}
+        ${open ? "z-20" : "z-10"}`}
     >
       {/* side cutouts */}
-      <motion.div
-        animate={{ top: open ? "50%" : "88%", translateY: "-50%" }}
-        transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+      <div
         className="absolute -left-5 w-11 h-20 rounded-full bg-cyan-400 z-[25]"
+        style={{ top: "88%", transform: "translateY(-50%)" }}
       />
-      <motion.div
-        animate={{ top: open ? "50%" : "88%", translateY: "-50%" }}
-        transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+      <div
         className="absolute -right-5 w-11 h-20 rounded-full bg-cyan-400 z-[25]"
+        style={{ top: "88%", transform: "translateY(-50%)" }}
       />
 
       {/* Header */}
       <div className="flex items-start justify-between px-8 py-4">
-        <div className="text-white font-semibold text-lg break-words max-w-[80%]">
-          {s.name}
+        <div className="max-w-[80%]">
+          <div className="text-white font-semibold text-lg break-words">
+            {s.name}
+          </div>
+          <div className="text-cyan-300 text-xs mt-1">
+            {safeDate(s.check_in)?.toLocaleDateString()} → {safeDate(s.check_out)?.toLocaleDateString()}
+          </div>
         </div>
         <span className={`text-xs ${typeColor[s.type] || "text-blue-400"} shrink-0`}>
           {s.type}
@@ -170,47 +205,167 @@ const StayCard = ({ s }: { s: Stayin }) => {
             transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
             className="border-t border-white/10 px-10 py-4 text-gray-300 space-y-3 overflow-hidden"
           >
-            <div className="flex items-center gap-2 text-sm">
-              <MapPin size={14} className="text-gray-400" />
-              <span>
-                {s.city && `${s.city}, `} {s.country}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-gray-400">
-              <Calendar size={12} />
-              <span>
-                {safeDate(s.check_in)?.toLocaleDateString()} →{" "}
-                {safeDate(s.check_out)?.toLocaleDateString()}{" "}
-                {nights > 0 && `(${nights} night${nights !== 1 ? "s" : ""})`}
-              </span>
-            </div>
-            {s.maps_pin && (
-              <a
-                href={s.maps_pin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline"
-              >
-                View on Maps →
-              </a>
+            {/* Edit Form */}
+            {isEditing ? (
+              <div className="space-y-3 mb-4">
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Name</label>
+                  <Input
+                    type="text"
+                    value={editData.name}
+                    onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                    className="bg-black/40 border-white/20 text-white text-sm h-9"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">City</label>
+                    <Input
+                      type="text"
+                      value={editData.city}
+                      onChange={(e) => setEditData({ ...editData, city: e.target.value })}
+                      className="bg-black/40 border-white/20 text-white text-sm h-9"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Country</label>
+                    <Input
+                      type="text"
+                      value={editData.country}
+                      onChange={(e) => setEditData({ ...editData, country: e.target.value })}
+                      className="bg-black/40 border-white/20 text-white text-sm h-9"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Check In</label>
+                    <Input
+                      type="date"
+                      value={editData.check_in}
+                      onChange={(e) => setEditData({ ...editData, check_in: e.target.value })}
+                      className="bg-black/40 border-white/20 text-white text-sm h-9"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Check Out</label>
+                    <Input
+                      type="date"
+                      value={editData.check_out}
+                      onChange={(e) => setEditData({ ...editData, check_out: e.target.value })}
+                      className="bg-black/40 border-white/20 text-white text-sm h-9"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Type</label>
+                  <select
+                    value={editData.type}
+                    onChange={(e) => setEditData({ ...editData, type: e.target.value })}
+                    className="w-full bg-black/40 border border-white/20 text-white text-sm h-9 rounded-md px-3"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <option value="HOTEL">HOTEL</option>
+                    <option value="AIRBNB">AIRBNB</option>
+                    <option value="HOSTEL">HOSTEL</option>
+                    <option value="MOTEL">MOTEL</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Maps Pin (optional)</label>
+                  <Input
+                    type="text"
+                    value={editData.maps_pin}
+                    onChange={(e) => setEditData({ ...editData, maps_pin: e.target.value })}
+                    className="bg-black/40 border-white/20 text-white text-sm h-9"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin size={14} className="text-gray-400" />
+                  <span>
+                    {s.city && `${s.city}, `} {s.country}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-400">
+                  <Calendar size={12} />
+                  <span>
+                    {safeDate(s.check_in)?.toLocaleDateString()} →{" "}
+                    {safeDate(s.check_out)?.toLocaleDateString()}{" "}
+                    {nights > 0 && `(${nights} night${nights !== 1 ? "s" : ""})`}
+                  </span>
+                </div>
+                {s.maps_pin && (
+                  <a
+                    href={s.maps_pin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline"
+                  >
+                    View on Maps →
+                  </a>
+                )}
+              </>
             )}
             
-            {/* Delete Button */}
-            <div className="border-t border-white/10 pt-3 flex justify-end">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  s.id && handleDeleteStayIn(s.id, s.name);
-                }}
-                className="p-2 hover:bg-red-500/20 rounded-full transition-colors"
-              >
-                <Trash2 size={18} className="text-red-400" />
-              </button>
+            {/* Action Buttons */}
+            <div className="border-t border-white/10 pt-3 flex justify-end gap-2">
+              {isEditing ? (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSaveEdit();
+                    }}
+                    className="p-2 hover:bg-green-500/20 rounded-full transition-colors"
+                  >
+                    <Save size={18} className="text-green-400" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCancelEdit();
+                    }}
+                    className="p-2 hover:bg-gray-500/20 rounded-full transition-colors"
+                  >
+                    <X size={18} className="text-gray-400" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsEditing(true);
+                    }}
+                    className="p-2 hover:bg-blue-500/20 rounded-full transition-colors"
+                  >
+                    <Edit2 size={18} className="text-blue-400" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      s.id && handleDeleteStayIn(s.id, s.name);
+                    }}
+                    className="p-2 hover:bg-red-500/20 rounded-full transition-colors"
+                  >
+                    <Trash2 size={18} className="text-red-400" />
+                  </button>
+                </>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 };
 
@@ -285,7 +440,7 @@ const StayCard = ({ s }: { s: Stayin }) => {
 
       {/* Grid */}
       {loading && stayins.length === 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="space-y-4">
           {Array.from({ length: PAGE_SIZE }).map((_, i) => (
             <div
               key={i}
@@ -297,7 +452,7 @@ const StayCard = ({ s }: { s: Stayin }) => {
         <div className="text-gray-400 text-center py-8">No stay-ins found</div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="space-y-4">
             {filtered.slice(0, visibleCount).map((s) => (
               <StayCard key={s.id} s={s} />
             ))}

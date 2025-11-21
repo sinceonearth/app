@@ -1,11 +1,13 @@
 "use client";
 
-import { Satellite } from "lucide-react";
+import { Satellite, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { UserIcon } from "@/components/UserIcon";
+import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export const Header = () => {
   const { user } = useAuth();
@@ -14,6 +16,8 @@ export const Header = () => {
   const [mounted, setMounted] = useState(false); // ✅ Only render after hydration
   const [isVisible, setIsVisible] = useState(true); // Track header visibility
   const [lastScrollY, setLastScrollY] = useState(0); // Track last scroll position
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { toast } = useToast();
   
   const isRadrPage = location === "/radr";
   const toggleRadr = () => {
@@ -22,6 +26,13 @@ export const Header = () => {
     } else {
       navigate("/radr");
     }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries();
+    toast({ title: "Data refreshed" });
+    setTimeout(() => setIsRefreshing(false), 1000);
   };
 
   // Detect safe-area inset (notch) and mount header
@@ -96,16 +107,29 @@ export const Header = () => {
           </motion.div>
         </div>
 
-        {/* Satellite icon for scanning nearby travelers */}
-        <button
-          onClick={toggleRadr}
-          className="flex h-12 w-12 items-center justify-center rounded-full transition-all duration-300 active:opacity-80"
-        >
-          <Satellite
-            className="h-9 w-9"
-            style={{ stroke: isRadrPage ? "#22c55e" : "#ffffff" }}
-          />
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Refresh button */}
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:bg-white/10 transition-all duration-300 disabled:opacity-50"
+          >
+            <RefreshCw
+              className={`h-5 w-5 text-white transition-transform duration-500 ${isRefreshing ? 'animate-spin' : ''}`}
+            />
+          </button>
+
+          {/* Satellite icon for scanning nearby travelers */}
+          <button
+            onClick={toggleRadr}
+            className="flex h-12 w-12 items-center justify-center rounded-full transition-all duration-300 active:opacity-80"
+          >
+            <Satellite
+              className="h-9 w-9"
+              style={{ stroke: isRadrPage ? "#22c55e" : "#ffffff" }}
+            />
+          </button>
+        </div>
       </div>
     </header>
   );

@@ -5,9 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import ManualAddFlight from "@/components/ManualAddFlight";
-import { Ruler, Clock, ArrowLeft, Trash2, Plus } from "lucide-react";
+import { Ruler, Clock, ArrowLeft, Trash2, Plus, Edit2, Save, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import airportsDataRaw from "@/airports.json";
+import { Input } from "@/components/ui/input";
 
 interface Airport {
   ident?: string;
@@ -24,6 +25,7 @@ interface Flight {
   departure?: string;
   arrival?: string;
   departure_time?: string | null;
+  arrival_time?: string | null;
   date?: string | null;
   distance?: number | null;
   duration?: string | null;
@@ -181,6 +183,13 @@ export default function TripHistory() {
   // --- Flight Card ---
   const FlightCard = ({ f, showStatus }: { f: Flight; showStatus?: boolean }) => {
     const [open, setOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editData, setEditData] = useState({
+      flight_number: f.flight_number || '',
+      departure_time: f.departure_time || '',
+      arrival_time: f.arrival_time || '',
+      status: f.status || '',
+    });
 
     const depCity = useMemo(() => findCityByCode(f.departure), [f.departure]);
     const arrCity = useMemo(() => findCityByCode(f.arrival), [f.arrival]);
@@ -200,29 +209,43 @@ export default function TripHistory() {
     const h = Math.floor(hours);
     const m = Math.round((hours - h) * 60);
 
+    const handleSaveEdit = async () => {
+      if (!f.id || !token) return;
+      const res = await apiRequest("PUT", `/api/flights/${f.id}`, {
+        ...f,
+        ...editData,
+      }, token);
+      if (!res.ok) return alert("Failed to update flight");
+      setIsEditing(false);
+      refetch();
+    };
+
+    const handleCancelEdit = () => {
+      setEditData({
+        flight_number: f.flight_number || '',
+        departure_time: f.departure_time || '',
+        arrival_time: f.arrival_time || '',
+        status: f.status || '',
+      });
+      setIsEditing(false);
+    };
+
     return (
-      <motion.div
-        layout
+      <div
         onClick={() => setOpen((p) => !p)}
-        initial={false}
-        animate={{ scale: open ? 1.015 : 1 }}
-        transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
         className={`relative cursor-pointer rounded-[25px] overflow-hidden 
           shadow-[0_8px_32px_rgba(0,0,0,0.25)] border border-white/10 backdrop-blur-xl 
           bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900
-          ${open ? "z-20" : "z-10 -mt-7 hover:-translate-y-1"} 
-          transition-all duration-300`}
+          ${open ? "z-20" : "z-10"}`}
       >
         {/* side cutouts */}
-        <motion.div
-          animate={{ top: open ? "50%" : "88%", translateY: "-50%" }}
-          transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+        <div
           className="absolute -left-5 w-11 h-20 rounded-full bg-green-500 z-[25]"
+          style={{ top: "88%", transform: "translateY(-50%)" }}
         />
-        <motion.div
-          animate={{ top: open ? "50%" : "88%", translateY: "-50%" }}
-          transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+        <div
           className="absolute -right-5 w-11 h-20 rounded-full bg-green-500 z-[25]"
+          style={{ top: "88%", transform: "translateY(-50%)" }}
         />
 
         {/* Header */}
@@ -239,6 +262,13 @@ export default function TripHistory() {
               </span>
             </div>
             <div className="text-green-300 text-sm">{dateStr}</div>
+            {(f.departure_time || f.arrival_time) && (
+              <div className="text-gray-400 text-xs mt-1 flex items-center gap-2">
+                {f.departure_time && <span>{f.departure_time.slice(0, 5)}</span>}
+                {f.departure_time && f.arrival_time && <span>→</span>}
+                {f.arrival_time && <span>{f.arrival_time.slice(0, 5)}</span>}
+              </div>
+            )}
           </div>
 
           {showStatus && f.status && (
@@ -291,11 +321,59 @@ export default function TripHistory() {
                 </div>
               )}
 
+              {/* Edit Form */}
+              {isEditing && (
+                <div className="space-y-3 mb-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1 block">Departure Time</label>
+                      <Input
+                        type="time"
+                        value={editData.departure_time}
+                        onChange={(e) => setEditData({ ...editData, departure_time: e.target.value })}
+                        className="bg-black/40 border-white/20 text-white text-sm h-9"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1 block">Arrival Time</label>
+                      <Input
+                        type="time"
+                        value={editData.arrival_time}
+                        onChange={(e) => setEditData({ ...editData, arrival_time: e.target.value })}
+                        className="bg-black/40 border-white/20 text-white text-sm h-9"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Flight Number</label>
+                    <Input
+                      type="text"
+                      value={editData.flight_number}
+                      onChange={(e) => setEditData({ ...editData, flight_number: e.target.value })}
+                      className="bg-black/40 border-white/20 text-white text-sm h-9"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Status</label>
+                    <Input
+                      type="text"
+                      value={editData.status}
+                      onChange={(e) => setEditData({ ...editData, status: e.target.value })}
+                      className="bg-black/40 border-white/20 text-white text-sm h-9"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Bottom strip */}
               <div className="border-t border-white/10 pt-4 flex justify-between items-center">
                 <div className="flex flex-col">
                   <span className="text-xs text-gray-500">Flight Pass</span>
-                  <div className="mt-1">
+                  <div className="mt-1 scale-75 origin-left">
                     <div className="flex gap-[2px]">
                       {Array.from({ length: 40 }).map((_, i) => (
                         <div
@@ -310,20 +388,56 @@ export default function TripHistory() {
                   </div>
                 </div>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    f.id && handleDeleteFlight(f.id, f.flight_number || "");
-                  }}
-                  className="p-2 hover:bg-red-500/20 rounded-full transition-colors"
-                >
-                  <Trash2 size={18} className="text-red-400" />
-                </button>
+                <div className="flex gap-2">
+                  {isEditing ? (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSaveEdit();
+                        }}
+                        className="p-2 hover:bg-green-500/20 rounded-full transition-colors"
+                      >
+                        <Save size={18} className="text-green-400" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCancelEdit();
+                        }}
+                        className="p-2 hover:bg-gray-500/20 rounded-full transition-colors"
+                      >
+                        <X size={18} className="text-gray-400" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsEditing(true);
+                        }}
+                        className="p-2 hover:bg-green-500/20 rounded-full transition-colors"
+                      >
+                        <Edit2 size={18} className="text-green-600" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          f.id && handleDeleteFlight(f.id, f.flight_number || "");
+                        }}
+                        className="p-2 hover:bg-red-500/20 rounded-full transition-colors"
+                      >
+                        <Trash2 size={18} className="text-red-400" />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
+      </div>
     );
   };
 
@@ -373,7 +487,7 @@ export default function TripHistory() {
           <div className="text-gray-400 text-center">No upcoming flights</div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="space-y-4">
               {upcomingFlights.slice(0, visibleUpcomingCount).map((f) => (
                 <FlightCard key={f.id} f={f} showStatus />
               ))}
@@ -426,7 +540,7 @@ export default function TripHistory() {
           <div className="text-gray-400 text-center">No flights for {selectedPastTab}</div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="space-y-4">
               {pastToShow.slice(0, visiblePastCount).map((f) => (
                 <FlightCard key={f.id} f={f} showStatus />
               ))}

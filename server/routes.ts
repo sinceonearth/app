@@ -347,6 +347,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // --- Update flight ---
+  app.put("/api/flights/:id", requireAuth, async (req: RequestWithUser, res) => {
+    try {
+      const { id } = req.params;
+      const body = req.body;
+
+      const updated = await db
+        .update(flights)
+        .set({
+          airline_name: body.airline_name,
+          airline_code: body.airline_code,
+          flight_number: body.flight_number,
+          departure: body.departure,
+          arrival: body.arrival,
+          date: body.date,
+          departure_time: body.departure_time,
+          arrival_time: body.arrival_time,
+          status: body.status,
+          aircraft_type: body.aircraft_type,
+          duration: body.duration,
+          distance: body.distance,
+          departure_terminal: body.departure_terminal,
+          arrival_terminal: body.arrival_terminal,
+        })
+        .where(and(eq(flights.id, id), eq(flights.user_id, req.user!.userId)))
+        .returning();
+
+      if (!updated.length) return res.status(404).json({ message: "Flight not found" });
+      return res.json({ message: "Flight updated successfully", flight: updated[0] });
+    } catch (err) {
+      console.error("❌ Error updating flight:", err);
+      return res.status(500).json({ message: "Failed to update flight" });
+    }
+  });
+
   // --- Delete flight ---
   app.delete("/api/flights/:id", requireAuth, async (req: RequestWithUser, res) => {
     try {
@@ -405,6 +440,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error("❌ Error adding stay in:", err);
       return res.status(500).json({ message: "Failed to add stay in" });
+    }
+  });
+
+  // --- Update stay in ---
+  app.put("/api/stayins/:id", requireAuth, async (req: RequestWithUser, res) => {
+    try {
+      const { id } = req.params;
+      const body = req.body;
+
+      if (!body.name || !body.city || !body.country || !body.check_in || !body.check_out || !body.type) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      const updated = await db
+        .update(stayins)
+        .set({
+          name: body.name,
+          city: body.city,
+          country: body.country,
+          check_in: body.check_in,
+          check_out: body.check_out,
+          maps_pin: body.maps_pin || null,
+          type: body.type,
+        })
+        .where(and(eq(stayins.id, id), eq(stayins.user_id, req.user!.userId)))
+        .returning();
+
+      if (!updated.length) return res.status(404).json({ message: "Stay in not found" });
+      return res.json({ message: "Stay in updated successfully", stayin: updated[0] });
+    } catch (err) {
+      console.error("❌ Error updating stay in:", err);
+      return res.status(500).json({ message: "Failed to update stay in" });
     }
   });
 
