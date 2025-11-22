@@ -9,6 +9,7 @@ import { dirname, join } from "path";
 
 import { db } from "./db";
 import { storage, pool } from "./storage";
+import { radrStorage } from "./radr-storage";
 import { flights, airports, stayins, users, contactMessages,
 radrGroups, radrGroupMembers, radrMessages } from "@shared/schema";
 
@@ -1129,14 +1130,20 @@ app.delete("/api/radr/groups/:groupId", requireAuth, async (req: RequestWithUser
   }
 });
 
-app.delete("/api/radr/messages/:messageId", requireAuth, requireAdmin, async (req, res) => {
+app.delete("/api/radr/messages/:messageId", requireAuth, async (req: RequestWithUser, res) => {
   try {
     const { messageId } = req.params;
-    await pool.query(`DELETE FROM radr_messages WHERE id = $1`, [messageId]);
-    return res.json({ message: "Radr message deleted" });
-  } catch (err) {
+    await radrStorage.deleteMessage(messageId, req.user!.userId);
+    return res.json({ message: "Message deleted successfully" });
+  } catch (err: any) {
     console.error("❌ Error deleting radr message:", err);
-    return res.status(500).json({ message: "Failed to delete radr message" });
+    if (err.message === "Message not found") {
+      return res.status(404).json({ message: err.message });
+    }
+    if (err.message?.includes("Unauthorized")) {
+      return res.status(403).json({ message: err.message });
+    }
+    return res.status(500).json({ message: "Failed to delete message" });
   }
 });
 
