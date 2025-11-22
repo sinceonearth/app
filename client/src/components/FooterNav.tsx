@@ -13,11 +13,11 @@ import { faceAlien } from "@lucide/lab";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 
-// Custom Alien icon (slightly larger)
+// Custom Alien icon
 const AlienIcon = ({ stroke }: { stroke?: string }) => (
   <Icon
     iconNode={faceAlien}
-    className="h-9 w-9"
+    className="h-7 w-7"
     style={{ stroke: stroke || "#9ca3af", fill: "none" }}
   />
 );
@@ -49,7 +49,7 @@ export function FooterNav() {
               style={{ background: "transparent" }}
             >
               <IconComponent
-                className="h-9 w-9"
+                className="h-7 w-7"
                 stroke={isActive ? "#22c55e" : "#9ca3af"}
               />
             </button>
