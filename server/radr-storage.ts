@@ -182,4 +182,26 @@ export const radrStorage = {
 
     return await this.addMember(groupId, userResult.rows[0].id);
   },
+
+  async deleteMessage(messageId: string, userId: string) {
+    const messageResult = await pool.query(
+      `SELECT user_id FROM radr_messages WHERE id = $1`,
+      [messageId]
+    );
+    
+    if (messageResult.rows.length === 0) {
+      throw new Error("Message not found");
+    }
+    
+    if (messageResult.rows[0].user_id !== userId) {
+      throw new Error("Unauthorized: You can only delete your own messages");
+    }
+    
+    await pool.query(
+      `DELETE FROM radr_messages WHERE id = $1`,
+      [messageId]
+    );
+    
+    return { success: true };
+  },
 };
