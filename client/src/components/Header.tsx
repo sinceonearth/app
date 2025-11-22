@@ -107,25 +107,30 @@ export const Header = () => {
           </motion.div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {/* Refresh button */}
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:bg-white/10 transition-all duration-300 disabled:opacity-50"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-green-500/20 active:bg-white/10 transition-all duration-300 disabled:opacity-50 group relative overflow-hidden"
           >
+            {isRefreshing && (
+              <div className="absolute inset-0 bg-green-500/10 animate-pulse rounded-full" />
+            )}
             <RefreshCw
-              className={`h-5 w-5 text-white transition-transform duration-500 ${isRefreshing ? 'animate-spin' : ''}`}
+              className={`h-5 w-5 text-white transition-all duration-500 relative z-10 ${
+                isRefreshing ? 'animate-spin text-green-400' : 'group-hover:text-green-400'
+              }`}
             />
           </button>
 
           {/* Satellite icon for scanning nearby travelers */}
           <button
             onClick={toggleRadr}
-            className="flex h-12 w-12 items-center justify-center rounded-full transition-all duration-300 active:opacity-80"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 active:bg-white/10 transition-all duration-300"
           >
             <Satellite
-              className="h-9 w-9"
+              className="h-7 w-7"
               style={{ stroke: isRadrPage ? "#22c55e" : "#ffffff" }}
             />
           </button>
