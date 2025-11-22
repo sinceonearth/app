@@ -91,7 +91,29 @@ const RadrMessages = () => {
   const [addMemberSearch, setAddMemberSearch] = useState('');
   const [showAddMemberDropdown, setShowAddMemberDropdown] = useState(false);
   const [detectingLocation, setDetectingLocation] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+  // Calculate distance between two coordinates in kilometers
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // Check if user is within range of a group's target location
+  const isWithinRange = (group: RadrGroup): boolean => {
+    if (!location) return false;
+    const distance = calculateDistance(location.lat, location.lng, group.target_lat, group.target_lng);
+    return distance <= group.target_radius_km;
+  };
 
   const useCurrentLocation = async () => {
     setDetectingLocation(true);
@@ -349,6 +371,42 @@ const RadrMessages = () => {
       }
     } catch (err) {
       console.error("Failed to remove member:", err);
+    }
+  };
+
+  const handleLongPressStart = (messageId: string, isOwnMessage: boolean) => {
+    if (!isOwnMessage) return;
+    
+    const timer = setTimeout(() => {
+      setMessageToDelete(messageId);
+    }, 500); // 500ms long press
+    
+    setLongPressTimer(timer);
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  const confirmDeleteMessage = async () => {
+    if (!messageToDelete || !token || !selectedGroup) return;
+    
+    try {
+      const res = await apiRequest("DELETE", `/api/radr/messages/${messageToDelete}`, null, token);
+      
+      if (res.ok) {
+        setMessageToDelete(null);
+        await fetchGroupMessages(selectedGroup);
+      } else {
+        const error = await res.json();
+        alert(error.message || "Failed to delete message");
+      }
+    } catch (err) {
+      console.error("Failed to delete message:", err);
+      alert("Failed to delete message");
     }
   };
 
@@ -887,9 +945,9 @@ const RadrMessages = () => {
                           </div>
                           <p className="text-lg font-medium text-gray-300">No messages yet</p>
                           <p className="text-sm mt-2 max-w-md mx-auto">
-                            {currentGroup.has_arrived 
+                            {isWithinRange(currentGroup)
                               ? 'Be the first to say hello! Start the conversation.' 
-                              : `Chat will unlock when members arrive at ${currentGroup.target_name}`}
+                              : `Chat will unlock when you're within range of ${currentGroup.target_name}`}
                           </p>
                         </div>
                       ) : (
@@ -923,7 +981,16 @@ const RadrMessages = () => {
                                     <span className="text-gray-600">•</span>
                                     <p className="text-xs text-gray-500">{formatTime(msg.created_at)}</p>
                                   </div>
-                                  <p className={`text-white text-[15px] leading-relaxed ${msg.user_id === user?.id ? 'text-right' : 'text-left'}`}>{msg.content}</p>
+                                  <p 
+                                    className={`text-white text-[15px] leading-relaxed ${msg.user_id === user?.id ? 'text-right select-none' : 'text-left'}`}
+                                    onTouchStart={() => handleLongPressStart(msg.id, msg.user_id === user?.id)}
+                                    onTouchEnd={handleLongPressEnd}
+                                    onMouseDown={() => handleLongPressStart(msg.id, msg.user_id === user?.id)}
+                                    onMouseUp={handleLongPressEnd}
+                                    onMouseLeave={handleLongPressEnd}
+                                  >
+                                    {msg.content}
+                                  </p>
                                 </div>
                               )}
                             </motion.div>
@@ -935,19 +1002,27 @@ const RadrMessages = () => {
 
                     {/* Input Bar */}
                     <div className="flex-shrink-0 border-t border-white/10 bg-black/95 backdrop-blur-xl p-4">
+                      {!isWithinRange(currentGroup) && (
+                        <div className="mb-3 px-4 py-2.5 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+                          <p className="text-orange-300 text-sm text-center font-medium flex items-center justify-center gap-2">
+                            <Navigation size={16} />
+                            You're out of range - move closer to {currentGroup.target_name} to chat
+                          </p>
+                        </div>
+                      )}
                       <div className="flex gap-3 max-w-4xl mx-auto">
                         <input
                           type="text"
                           value={newMessage}
                           onChange={(e) => setNewMessage(e.target.value)}
                           onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                          placeholder={currentGroup.has_arrived ? "Type your message..." : "🔒 Arrive at the location to unlock chat"}
-                          disabled={!currentGroup.has_arrived}
+                          placeholder={isWithinRange(currentGroup) ? "Type your message..." : "🔒 Move within range to unlock chat"}
+                          disabled={!isWithinRange(currentGroup)}
                           className="flex-1 px-5 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed focus:border-green-500/50 focus:ring-2 focus:ring-green-500/20 transition-all outline-none"
                         />
                         <button
                           onClick={sendMessage}
-                          disabled={!currentGroup.has_arrived || !newMessage.trim()}
+                          disabled={!isWithinRange(currentGroup) || !newMessage.trim()}
                           className="p-3 bg-[#22c55e] hover:bg-[#1ea54e] disabled:bg-gray-600 disabled:cursor-not-allowed text-black rounded-full transition-all shadow-lg shadow-green-500/20 disabled:shadow-none"
                           style={{width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}
                         >
@@ -1111,6 +1186,46 @@ const RadrMessages = () => {
                   </motion.div>
                 ) : null;
               })()}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Delete Message Confirmation Modal */}
+        <AnimatePresence>
+          {messageToDelete && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={() => setMessageToDelete(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.95, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-neutral-900 border border-red-500/20 rounded-2xl p-6 max-w-sm w-full"
+              >
+                <h3 className="text-xl font-bold text-white mb-3">Delete Message?</h3>
+                <p className="text-gray-400 text-sm mb-6">
+                  This message will be permanently deleted and cannot be recovered.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setMessageToDelete(null)}
+                    className="flex-1 px-4 py-2.5 bg-black/40 hover:bg-black/60 text-white rounded-lg transition-all border border-white/10"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDeleteMessage}
+                    className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all font-medium"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
